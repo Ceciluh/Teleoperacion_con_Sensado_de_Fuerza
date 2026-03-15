@@ -15,7 +15,7 @@ Nodos de red:
 
 import numpy as np
 import matplotlib
-#from xarm.wrapper import XArmAPI
+from xarm.wrapper import XArmAPI
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -340,10 +340,10 @@ class SlaveRobot:
         self.t   = 0.0
         self.contact_state = "APROXIMACIÓN"
 
-#        self._arm = XArmAPI(XARM_SLAVE_IP)
-#        self._arm.motion_enable(enable=True)
-#        self._arm.set_mode(1)
-#        self._arm.set_state(0)
+        self._arm = XArmAPI(XARM_SLAVE_IP)
+        self._arm.motion_enable(enable=True)
+        self._arm.set_mode(1)
+        self._arm.set_state(0)
 
 
     def ik_dls(self, x_des, damp=0.01):
@@ -365,8 +365,8 @@ class SlaveRobot:
         px = float(x_des[0]) * _SCALE + _HOME_X
         py = float(x_des[1]) * _SCALE + _HOME_Y
         pz = _HOME_Z
-#        self._arm.set_servo_cartesian_aa(
-#            [px, py, pz, 0.0, 0.0, 0.0], speed=100, mvacc=1000)
+        self._arm.set_servo_cartesian_aa(
+            [px, py, pz, 0.0, 0.0, 0.0], speed=100, mvacc=1000)
 
         # Calcular fuerza de contacto según modelo Peg-in-Hole
         x_ef = fk_3r(self.q)
