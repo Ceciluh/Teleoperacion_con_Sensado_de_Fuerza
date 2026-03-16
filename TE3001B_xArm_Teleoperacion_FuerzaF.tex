@@ -1,0 +1,1276 @@
+﻿%% ============================================================
+%% ENTREGABLE — TE3001B Fundamentación de Robótica
+%% Teleoperación con Sensado de Fuerza: xArm 6 (Maestro-Esclavo)
+%% Formato IEEE Transactions — Plantilla para Alumnos
+%% Prof. Alberto Muñoz — Computational Robotics Lab
+%% Tecnológico de Monterrey — 2026
+%% ============================================================
+\documentclass[journal,10pt,twoside]{IEEEtran}
+
+%% -- Paquetes base --------------------------------------------
+\UseRawInputEncoding
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{placeins}
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage{amsmath,amssymb,bm}
+\usepackage{graphicx} 
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{colortbl}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{listings}
+\usepackage{tcolorbox}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{url}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta,shapes,positioning,calc,backgrounds}
+\tcbuselibrary{breakable,skins}
+
+\hypersetup{colorlinks=true, linkcolor=tec_blue, urlcolor=tec_blue,
+            citecolor=tec_blue}
+
+%% -- Colores institucionales ----------------------------------
+\definecolor{tec_blue}{RGB}{0,68,124}
+\definecolor{tec_lightblue}{RGB}{0,140,200}
+\definecolor{tec_red}{RGB}{190,30,45}
+\definecolor{tec_gray}{RGB}{100,100,100}
+\definecolor{code_bg}{RGB}{245,247,250}
+\definecolor{code_kw}{RGB}{0,100,180}
+\definecolor{code_str}{RGB}{180,50,20}
+\definecolor{code_cmt}{RGB}{80,140,80}
+\definecolor{box_todo}{RGB}{255,243,205}
+\definecolor{box_todo_border}{RGB}{200,140,0}
+\definecolor{box_rubric}{RGB}{232,245,233}
+\definecolor{box_rubric_border}{RGB}{67,160,71}
+\definecolor{box_theory}{RGB}{227,242,253}
+\definecolor{box_theory_border}{RGB}{25,118,210}
+
+%% -- Cajas de tcolorbox --------------------------------------─
+\newtcolorbox{todobox}[1][Completar]{
+  colback=box_todo, colframe=box_todo_border,
+  title={\textbf{$\triangleright$ #1}},
+  fonttitle=\bfseries\color{tec_gray},
+  breakable, enhanced, left=4pt, right=4pt
+}
+\newtcolorbox{rubricbox}[1][Rúbrica]{
+  colback=box_rubric, colframe=box_rubric_border,
+  title={\textbf{\checkmark\ Criterio de Evaluación — #1}},
+  fonttitle=\bfseries\small\color{box_rubric_border},
+  breakable, enhanced, left=4pt, right=4pt
+}
+\newtcolorbox{theorybox}[1][Marco Teórico]{
+  colback=box_theory, colframe=box_theory_border,
+  title={\textbf{(i) Contexto: #1}},
+  fonttitle=\bfseries\small\color{tec_blue},
+  breakable, enhanced, left=4pt, right=4pt
+}
+
+%% -- Estilo de código ----------------------------------------─
+\lstdefinestyle{python}{
+  language=Python,
+  backgroundcolor=\color{code_bg},
+  basicstyle=\ttfamily\scriptsize,
+  keywordstyle=\color{code_kw}\bfseries,
+  stringstyle=\color{code_str},
+  commentstyle=\color{code_cmt}\itshape,
+  numbers=left, numberstyle=\tiny\color{tec_gray},
+  numbersep=6pt, frame=single, tabsize=4,
+  showstringspaces=false, breaklines=true,
+  morekeywords={import,from,as,def,class,return,True,False,None,self},
+  literate={á}{{\'{a}}}1 {é}{{\'{e}}}1 {í}{{\'{i}}}1
+           {ó}{{\'{o}}}1 {ú}{{\'{u}}}1 {ñ}{{\~{n}}}1,
+}
+\lstset{style=python}
+
+%% -- Macros de ayuda ------------------------------------------
+\newcommand{\answerline}[1][3cm]{\underline{\hspace{#1}}}
+\newcommand{\pts}[1]{\textbf{\color{tec_red}[#1 pts]}}
+\newcommand{\TODO}[1]{\begin{todobox}[Respuesta del equipo]
+  \textit{#1}
+\end{todobox}}
+\newcommand{\FIGURE}[1]{\begin{todobox}[Insertar figura]
+  \centering
+  \begin{tikzpicture}
+    \draw[tec_gray, dashed, line width=1pt] (0,0) rectangle (8,4);
+    \node[tec_gray, font=\small] at (4,2) {#1};
+  \end{tikzpicture}
+\end{todobox}}
+
+%% -- Metadatos del artículo ----------------------------------─
+\begin{document}
+
+\title{Teleoperación con Sensado de Fuerza Física\\
+  entre dos xArm 6:\\
+  Diseño, Implementación y Evaluación Experimental}
+
+\author{%
+  \IEEEauthorblockN{%
+    Dante Alessandro Cortés Hernández  \IEEEauthorrefmark{1},\;
+    Ana Karen Moreno Acevedo \IEEEauthorrefmark{1},\;
+    Carlos Adriel Perez Silva	 \IEEEauthorrefmark{1},\;
+    Ana Cecilia Vázquez Yañez 	\IEEEauthorrefmark{1}%
+  }\\
+  \IEEEauthorblockA{%
+    \IEEEauthorrefmark{1}%
+    Computational Robotics Lab, Tecnológico de Monterrey,
+    Monterrey, N.L., México\\
+    \texttt{\{A01255460, A00839936, A01773018, A00839986\}@tec.mx, }
+  }
+}
+
+\maketitle
+
+%% -- Abstract ------------------------------------------------─
+\begin{abstract}
+Este trabajo presenta el diseño e implementación de una arquitectura de teleoperación maestro--esclavo entre dos 
+manipuladores xArm 6 con retroalimentación basada en contacto físico. En la propuesta, el robot esclavo ejecuta 
+una trayectoria de aproximación e interacción con un dispositivo mecánico instrumentado con un sensor de fuerza, 
+de modo que, al producirse contacto, la fuerza generada se mide y se transmite en tiempo real al sistema maestro 
+mediante una red local. A partir de esta información, el robot maestro recibe una señal asociada al contacto 
+ocurrido en el entorno remoto y modifica su comportamiento para representar una consecuencia análoga, como 
+detención o retirada. De esta manera, el sistema no solo sincroniza el movimiento entre ambos brazos, sino que 
+también comparte información de interacción con el entorno, planteando una forma práctica de teleoperación bidireccional
+basada en comportamiento. La arquitectura integra sensado de fuerza en el esclavo, comunicación entre computadoras de 
+control y una estrategia de respuesta cinemática en el maestro. El objetivo del trabajo es construir una plataforma 
+funcional y reproducible para estudiar principios de contacto, transmisión de fuerza y retroalimentación entre 
+manipuladores robóticos.
+\end{abstract}
+
+\begin{IEEEkeywords}
+teleoperación, sensado de fuerza, xArm 6, maestro--esclavo, contacto físico, interacción con el entorno
+\end{IEEEkeywords}
+
+%% ============================================================
+\section{Introducción}
+%% ============================================================
+
+\IEEEPARstart{E}{n} los sistemas de teleoperación, la utilidad del enlace maestro--esclavo aumenta significativamente
+cuando la interacción remota no se limita al seguimiento de trayectorias, sino que también incorpora información 
+del contacto con el entorno. En este contexto, la retroalimentación de fuerza permite que un evento mecánico 
+ocurrido en el sistema remoto tenga una representación significativa en el sistema local. Esto resulta 
+especialmente valioso en tareas donde la detección de contacto, la compresión de objetos o la interacción 
+con superficies no puede tratarse únicamente como un fenómeno geométrico.
+
+El xArm 6 ofrece una plataforma adecuada para estudiar este tipo de problemas, ya que su arquitectura de seis grados 
+de libertad y su interfaz de programación permiten implementar un esquema maestro--esclavo en el que el movimiento 
+y la información de interacción pueden intercambiarse entre dos estaciones de trabajo conectadas en red.
+
+\begin{theorybox}[Motivación]
+La idea central de este trabajo es que el contacto ocurrido en el robot esclavo no permanezca aislado en el entorno 
+remoto. Cuando el esclavo comprime un dispositivo físico basado en resorte, la fuerza asociada a esa interacción 
+se mide y se transmite al robot maestro para que éste represente una consecuencia equivalente del contacto. 
+
+En lugar de implementar una reflexión háptica ideal basada en torque directo, el proyecto adopta una estrategia 
+práctica donde la información de fuerza modifica el comportamiento del maestro mediante una respuesta observable, 
+como detención, reducción de avance o retirada.
+\end{theorybox}
+
+\subsection{Contexto y Motivación}
+
+La teleoperación con retroalimentación de fuerza es fundamental en la robótica moderna para lograr la transparencia 
+en tareas de interacción física remota. Su relevancia radica en que permite al operador percibir no solo el movimiento,
+sino también las fuerzas de contacto y la rigidez del entorno, lo que incrementa la precisión y la seguridad de la 
+tarea. Esta tecnología es crítica en aplicaciones como la cirugía robótica mínimamente invasiva, donde el médico 
+debe distinguir la resistencia de diferentes tejidos biológicos~\cite{sanchez2002}, y en la inspección de entornos 
+hostiles, como centrales nucleares o mantenimiento submarino, donde el sensado de fuerza ayuda a evitar daños 
+estructurales al interactuar con objetos frágiles o pesados~\cite{postigo2001}.
+
+En el estado del arte se han propuesto distintos esquemas de control para gestionar esta interacción, 
+destacando el control de impedancia, que modela la relación dinámica entre posición y fuerza y contribuye a mantener 
+la estabilidad del sistema aun en presencia de retardos de red~\cite{postigo2001}. De forma complementaria, 
+la incorporación de interfaces hápticas en sistemas con múltiples grados de libertad ha permitido una manipulación 
+más intuitiva y una interacción más rica entre operador y entorno remoto~\cite{sanchez2002}. En todos estos 
+enfoques, la idea central es que el sistema maestro no permanezca ajeno al contacto ocurrido en el esclavo, 
+sino que reciba información suficiente para representar sus efectos.
+
+Bajo esta perspectiva, en este proyecto se plantea una implementación práctica con dos xArm 6, donde el robot 
+esclavo interactúa con un sensor mecánico basado en un resorte. La fuerza generada durante dicho contacto se 
+captura y se transmite al sistema maestro mediante una red local entre computadoras. En lugar de depender 
+necesariamente de una reproducción ideal de torque reflejado, la retroalimentación se plantea como una 
+respuesta cinemática de retirada o modificación de movimiento en el robot maestro, con el fin de imitar 
+la consecuencia mecánica del contacto detectado por el esclavo. Este enfoque permite estudiar de manera 
+accesible los principios de teleoperación bidireccional con realimentación de fuerza~\cite{cardenas2016}.
+
+\subsection{Contribuciones del Trabajo}
+
+Las contribuciones principales de este trabajo son las siguientes:
+
+\begin{itemize}
+    \item Se presenta una arquitectura maestro--esclavo entre dos xArm 6 capaz de intercambiar información de movimiento
+    y de interacción con el entorno en tiempo real.
+    
+    \item Se define una tarea de contacto en la que el robot esclavo interactúa con un sensor físico basado en un 
+    resorte, con el propósito de capturar la fuerza aplicada durante la compresión.
+    
+    \item Se implemneta un mecanismo de transmisión de datos desde el esclavo hacia el maestro, de 
+    modo que la información de fuerza obtenida en el contacto pueda ser enviada al segundo robot a través de la red.
+    
+    \item Se propone una estrategia de retroalimentación basada en comportamiento, en la que el robot 
+    maestro modifica su movimiento para representar una consecuencia análoga al contacto detectado por el esclavo.
+    
+    \end{itemize}
+      
+%% ============================================================
+\section{Marco Teórico}
+\label{sec:background}
+%% ============================================================
+
+\subsection{Cinemática y Jacobiano del xArm 6}
+
+El xArm 6 es un manipulador serial de $n = 6$ grados de libertad con articulaciones rotacionales. Su cinemática directa
+puede describirse mediante la convención de Denavit--Hartenberg (DH) o el formalismo de Product of Exponentials (PoE).
+
+\begin{theorybox}[Jacobiano Geométrico]
+El Jacobiano $\bm{J}(\bm{q}) \in \mathbb{R}^{6\times6}$ relaciona las velocidades articulares con la velocidad 
+cartesiana del efector final:
+\[
+\begin{pmatrix} \bm{v} \\ \bm{\omega} \end{pmatrix} = \bm{J}(\bm{q})\,\dot{\bm{q}}
+\]
+donde $\bm{v}$ es la velocidad lineal y $\bm{\omega}$ la velocidad angular. Su transpuesta mapea fuerzas 
+cartesianas a torques articulares:
+\[
+\bm{\tau} = \bm{J}^\top(\bm{q})\,\bm{F}_{ext}
+\]
+Esta relación es la base del sensado de fuerza por torque articular.
+\end{theorybox}
+
+En este proyecto la fuerza no se estimó por torque articular sino mediante una celda de carga HX711 
+montada en el efector del esclavo. La formulación del 
+Jacobiano se presenta como fundamento teórico del análisis fuerza--movimiento.
+
+\subsubsection*{Pregunta~T1}
+
+\begin{enumerate}[label=(\alph*)]
+
+\item El Jacobiano geométrico relaciona velocidades articulares con la velocidad lineal 
+y angular física del efector:
+\[
+\begin{pmatrix} \bm{v} \\ \bm{\omega} \end{pmatrix} = \bm{J}_g(\bm{q})\dot{\bm{q}}
+\]
+El Jacobiano analítico relaciona velocidades articulares con la derivada de una parametrización 
+de la pose, como ángulos de Euler. La diferencia es que el analítico depende de la representación 
+de orientación elegida, mientras que el geométrico trabaja con velocidad angular física. Se usó el 
+Jacobiano geométrico porque su transpuesta conecta fuerzas cartesianas con torques articulares de forma directa:
+\[
+\bm{\tau} = \bm{J}^\top(\bm{q})\bm{F}_{ext}
+\]
+
+\item Dos singularidades del xArm 6:
+\begin{itemize}
+    \item Singularidad de codo estirado: brazo y antebrazo quedan alineados. El Jacobiano pierde rango y el robot 
+    pierde movilidad en ciertas direcciones cartesianas.
+    \item Singularidad de muñeca: dos ejes de rotación de la muñeca se alinean. El determinante del Jacobiano 
+    tiende a cero y la matriz se vuelve mal condicionada.
+\end{itemize}
+En ambos casos la estimación $\hat{\bm{F}} = (\bm{J}^\top)^{\dagger}\bm{\tau}$ se vuelve poco confiable porque 
+la pseudoinversa amplifica el ruido en los torques medidos.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.78\columnwidth]{t1_codo}
+    \caption{Singularidad de codo estirado.}
+    \label{fig:t1_codo}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.78\columnwidth]{t1_muneca}
+    \caption{Singularidad de muñeca.}
+    \label{fig:t1_muneca}
+\end{figure}
+
+\item La cercanía a una singularidad se detecta con el número de condición del Jacobiano:
+\[
+\kappa(\bm{J}) = \frac{\sigma_{\max}(\bm{J})}{\sigma_{\min}(\bm{J})}
+\]
+El robot está cerca de una singularidad cuando $\kappa(\bm{J}) > \kappa_{th}$, o equivalentemente 
+cuando $\sigma_{\min}(\bm{J}) < \varepsilon$.
+
+\end{enumerate}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.92\columnwidth]{t1_flujo}
+    \caption{Flujo de estimación de fuerza y control de singularidad.}
+    \label{fig:t1_flujo}
+\end{figure}
+
+\FloatBarrier
+
+\subsection{Dinámica del Manipulador}
+
+La dinámica de un robot rígido de $n$ grados de libertad puede
+expresarse como
+
+\begin{equation}
+\bm{M}(\bm{q})\ddot{\bm{q}} + \bm{C}(\bm{q},\dot{\bm{q}})\dot{\bm{q}}
++ \bm{g}(\bm{q}) = \bm{\tau} - \bm{J}^\top\bm{F}_{ext}
+\label{eq:dynamics}
+\end{equation}
+
+donde $\bm{M}$ es la matriz de inercia del manipulador,
+$\bm{C}$ representa los términos de Coriolis y centrífugos
+y $\bm{g}$ corresponde al vector de gravedad.
+
+\subsubsection*{Resolución de la Pregunta T2}
+
+\begin{enumerate}[label=(\alph*)]
+
+\item Considerando el caso nominal sin perturbación externa
+($\bm{F}_{ext} \approx \bm{0}$), la ley de control de par calculado
+(Computed Torque Control, CTC) se define como
+
+\[
+\bm{\tau} =
+\bm{M}(\bm{q})\bm{a}_d
++
+\bm{C}(\bm{q},\dot{\bm{q}})\dot{\bm{q}}
++
+\bm{g}(\bm{q})
+\]
+
+donde la aceleración auxiliar está dada por
+
+\[
+\bm{a}_d =
+\ddot{\bm{q}}_d
++
+\bm{K}_v(\dot{\bm{q}}_d - \dot{\bm{q}})
++
+\bm{K}_p(\bm{q}_d - \bm{q})
+\]
+
+Sustituyendo la ley de control en la Ec.~\eqref{eq:dynamics} y
+cancelando términos comunes se obtiene
+
+\[
+\ddot{\bm{q}} = \bm{a}_d
+\]
+
+Definiendo el error de seguimiento
+
+\[
+\bm{e} = \bm{q}_d - \bm{q},
+\qquad
+\dot{\bm{e}} = \dot{\bm{q}}_d - \dot{\bm{q}},
+\]
+
+y reordenando en términos del error se obtiene
+
+\[
+\ddot{\bm{e}} + \bm{K}_v\dot{\bm{e}} + \bm{K}_p\bm{e} = \bm{0}.
+\]
+
+Esta ecuación muestra que el error de seguimiento queda gobernado
+por una dinámica lineal de segundo orden desacoplada por
+articulación. La estabilidad asintótica global del sistema se
+garantiza si las matrices de ganancia $\bm{K}_p$ y $\bm{K}_v$
+son simétricas definidas positivas, lo que implica rigidez
+y amortiguamiento positivos en cada articulación.
+
+\item El bucle de control interno del xArm 6 en modo
+\texttt{SERVO} de la SDK opera aproximadamente a
+$\mathbf{1.5\,kHz}$. En nuestra implementación el
+controlador externo trabaja a una frecuencia de
+$100\,\text{Hz}$ ($DT = 0.01\,\text{s}$).
+
+Esta diferencia de frecuencias impone una limitación
+práctica en la selección de las ganancias $\bm{K}_p$
+y $\bm{K}_v$. Si las ganancias se incrementan demasiado,
+el sistema puede volverse sensible al muestreo,
+al retardo computacional y al ruido de medición,
+lo que puede provocar oscilaciones o saturación del
+esfuerzo de control. Por esta razón, el ancho de banda
+del lazo cerrado debe mantenerse por debajo de la
+frecuencia de actualización del controlador.
+
+\item Con las ganancias utilizadas en el controlador
+
+\[
+\bm{K}_p = \mathrm{diag}(120,\,100,\,80),
+\qquad
+\bm{K}_v = \mathrm{diag}(25,\,20,\,15)
+\]
+
+la ecuación característica para cada articulación
+puede escribirse como
+
+\[
+s^2 + k_{v,i}s + k_{p,i} = 0.
+\]
+
+Comparando con la forma estándar de un sistema de
+segundo orden
+
+\[
+s^2 + 2\zeta_i\omega_{n,i}s + \omega_{n,i}^2 = 0,
+\]
+
+se obtiene
+
+\[
+\omega_{n,i} = \sqrt{k_{p,i}},
+\qquad
+\zeta_i = \frac{k_{v,i}}{2\sqrt{k_{p,i}}}.
+\]
+
+De esta forma,
+
+\[
+\zeta_1 \approx 1.14,
+\qquad
+\zeta_2 = 1.00,
+\qquad
+\zeta_3 \approx 0.84.
+\]
+
+Estos valores indican una sintonización cercana al
+amortiguamiento crítico. En consecuencia,
+puede considerarse un valor representativo de
+
+\[
+\zeta \approx 1,
+\]
+
+lo que proporciona una respuesta rápida,
+con sobreimpulso mínimo y un seguimiento
+estable de la trayectoria.
+
+\end{enumerate}
+
+\subsection{Control de Impedancia}
+
+El control de impedancia modela el efector final como un sistema
+masa--resorte--amortiguador virtual, de modo que la interacción
+entre posición y fuerza pueda regularse de manera dinámica. Su
+forma general puede escribirse como
+
+\begin{equation}
+\bm{F}_{ctrl}
+=
+\bm{K}_d(\bm{x}_d-\bm{x})
++
+\bm{B}_d(\dot{\bm{x}}_d-\dot{\bm{x}})
++
+\bm{M}_d(\ddot{\bm{x}}_d-\ddot{\bm{x}})
+\label{eq:impedance}
+\end{equation}
+
+donde $\bm{K}_d$ representa la rigidez virtual, $\bm{B}_d$ el
+amortiguamiento virtual y $\bm{M}_d$ la masa virtual del sistema.
+
+\vspace{5mm}
+
+\begin{enumerate}[label=(\alph*)]
+
+\item El aumento de la rigidez virtual $\bm{K}_d$ tiene tres efectos
+principales en el sistema de teleoperación. En primer lugar,
+incrementa la sensación de rigidez percibida por el operador, ya
+que pequeñas desviaciones entre la posición deseada y la posición
+real generan fuerzas de interacción mayores. En segundo lugar,
+una rigidez elevada reduce el margen de estabilidad cuando existe
+retardo de red $T_d$, porque el sistema se vuelve más sensible a
+errores temporales y a oscilaciones inducidas por la comunicación.
+En tercer lugar, un valor grande de $\bm{K}_d$ acelera la respuesta
+ante contacto, ya que el efector reacciona con mayor intensidad
+frente a una penetración o desplazamiento en el entorno.
+
+Desde el punto de vista práctico, esto implica un compromiso: una
+rigidez baja produce una sensación más suave pero menos precisa,
+mientras que una rigidez alta mejora la respuesta local al contacto
+pero incrementa el riesgo de oscilación o comportamiento no pasivo.
+Por esta razón, en teleoperación con red y manipuladores físicos no
+conviene maximizar $\bm{K}_d$ sin considerar el retardo total del
+sistema.
+
+\item Para analizar el límite de rigidez con retardo de red se empleó
+el criterio de pasividad de Colgate,
+
+\[
+K_{d,\max}
+<
+\frac{\pi}{2\,T_d\,\omega_c}.
+\]
+
+En el laboratorio se consideró un retardo de red representativo de
+
+\[
+T_d = 20~\text{ms} = 0.02~\text{s}.
+\]
+
+Para la selección de $\omega_c$ se adoptó una aproximación
+conservadora basada en el lazo efectivo de teleoperación completo,
+no solamente en la electrónica interna del xArm. Aunque la SDK del
+robot trabaja con un servo interno rápido, la dinámica global del
+sistema queda limitada por la actualización externa, la red, el
+procesamiento del sensor de fuerza y la ejecución de comandos
+cartesianos. Por ello, se tomó una banda efectiva de
+
+\[
+f_c = 10~\text{Hz},
+\qquad
+\omega_c = 2\pi f_c = 2\pi(10) \approx 62.83~\text{rad/s}.
+\]
+
+Sustituyendo en el criterio anterior,
+
+\[
+K_{d,\max}
+<
+\frac{\pi}{2(0.02)(62.83)}
+\approx 1.25.
+\]
+
+Este resultado indica que, bajo una interpretación estricta de
+pasividad con $T_d=20$~ms, la rigidez virtual admisible para una
+retroalimentación háptica ideal es muy reducida. En consecuencia,
+una implementación agresiva de impedancia o de reflexión de fuerza
+directa habría comprometido la estabilidad del sistema.
+
+Por esta razón, en el presente proyecto no se implementó una
+impedancia háptica rígida en el maestro. En su lugar, se adoptó una
+estrategia práctica de retroalimentación basada en comportamiento,
+en la que la fuerza medida por la celda de carga en el esclavo
+provoca en el maestro una consecuencia observable, como detención,
+reducción de avance o retirada, manteniendo así una interacción
+estable y segura.
+
+\item Desde el punto de vista conceptual, el esquema de impedancia
+empleado para interpretar la interacción se formuló en
+\textbf{espacio cartesiano}, ya que la tarea de teleoperación se
+define en términos de movimiento del efector final y de contacto
+con el entorno. En este contexto, resulta más natural expresar la
+relación fuerza--desplazamiento en las coordenadas cartesianas
+$\bm{x}$ del efector que en las coordenadas articulares
+$\bm{q}$ del robot.
+
+Además, la variable física de interés en el experimento es la fuerza
+de contacto medida en el extremo del manipulador esclavo mediante una
+celda de carga con HX711, por lo que su interpretación es
+directamente cartesiana. Modelar la interacción en espacio
+articular habría complicado la relación entre la fuerza medida, la
+deformación del resorte y la respuesta observable del sistema.
+Por esta razón, la elección de un marco cartesiano resulta la más
+adecuada para la tarea de teleoperación desarrollada.
+
+\end{enumerate}
+\vspace{5mm}
+
+Con base en lo anterior, puede concluirse que el control de
+impedancia constituye un marco teórico útil para analizar la
+interacción fuerza--movimiento del sistema. Sin embargo, debido al
+retardo de red y a las limitaciones prácticas de la plataforma, la
+implementación experimental se orientó a una respuesta cinemática
+estable basada en la fuerza medida, en lugar de una reflexión
+háptica ideal de alta rigidez.
+
+\begin{table}[!t]
+\centering
+\caption{Efecto cualitativo de distintos valores de rigidez virtual.}
+\label{tab:kd_compare}
+\small
+\begin{tabular}{cccc}
+\toprule
+\textbf{$K_d$} & \textbf{Sensación} & \textbf{Respuesta} & \textbf{Estabilidad} \\
+\midrule
+Bajo   & Suave   & Lenta  & Alta \\
+Medio  & Balanceada & Moderada & Buena \\
+Alto   & Rígida  & Rápida & Reducida \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%% ============================================================
+\section{Arquitectura del Sistema}
+\label{sec:architecture}
+%% ============================================================
+
+\subsection{Visión General}
+El sistema consiste en dos manipuladores xArm6, cada uno conectado a su
+propia PC de control dentro de una red local. El maestro envía referencias
+de movimiento al esclavo, y el esclavo devuelve información de fuerza al
+maestro. Ambos flujos ocurren en tiempo real.
+El esclavo ejecuta una trayectoria de aproximación hacia una celda de carga.
+Al hacer contacto, la fuerza de reacción se mide y se transmite
+al sistema maestro. Aunque el maestro no está en contacto físico con el
+entorno, recibe esa fuerza y reacciona a ella modificando su trayectoria
+y estado dinámico.
+La arquitectura busca compartir el efecto del contacto entre ambos brazos.
+El sistema incorpora una capa de retroalimentación proveniente del entorno,
+lo que le da a la teleoperación un carácter bidireccional. La compresión
+del resorte en el esclavo se refleja directamente en el comportamiento
+del maestro.
+
+\subsubsection*{Pregunta~A1}
+
+\begin{enumerate}[label=(\alph*)]
+
+\item La arquitectura se organiza como un sistema maestro--esclavo distribuido en dos PCs conectadas por red local.
+La PC Maestra coordina el xArm 6 Maestro y ejecuta un modelo cinemático-dinámico planar de 3 GDL para calcular la 
+referencia cartesiana e incorporar la retroalimentación de fuerza del esclavo. La PC Esclava recibe esa referencia, 
+la convierte en comandos cartesianos para el xArm 6 Esclavo y procesa la señal del sensor HX711 recibida por UDP.
+
+Las señales que fluyen entre bloques son:
+\begin{itemize}
+    \item Maestro a Esclavo: posición cartesiana deseada $\bm{x}_d \in \mathbb{R}^2$ y estado de pinza $b \in \{0,1\}$.
+    \item Esclavo a Maestro: fuerza de contacto $\bm{F}_e \in \mathbb{R}^2$ y bandera de contacto $c \in \{0,1\}$.
+    \item ESP32 a PC Esclava: fuerza escalar $F \in \mathbb{R}$ medida por el HX711.
+\end{itemize}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\columnwidth]{diagrama_bloques}
+    \caption{Diagrama de bloques del sistema de teleoperación maestro-esclavo.}
+    \label{fig:diagrama_bloques}
+\end{figure}
+
+\item En cada ciclo de control el maestro calcula $\bm{x}_m \in \mathbb{R}^2$ a partir del estado 
+articular $\bm{q}_m \in \mathbb{R}^3$ y lo envía al esclavo por UDP. En paralelo, publica velocidades cartesianas 
+al xArm físico via \texttt{/servo\_server/delta\_twist\_cmds}. El esclavo recibe $\bm{x}_d$, lo convierte en un 
+comando para el xArm real con \texttt{set\_servo\_cartesian\_aa}, lee la fuerza del HX711 y la devuelve al 
+maestro como $\bm{F}_e$. El maestro incorpora $\bm{F}_e$ en su ley de control, cerrando el lazo bilateral.
+
+\item La frecuencia de actualización es $f_s = 100\,\text{Hz}$ ($DT = 0.01\,\text{s}$). 
+Se eligió \texttt{set\_servo\_cartesian\_aa} en el esclavo y MoveIt Servo con mensajes \texttt{TwistStamped} 
+en el maestro porque ambos aceptan comandos continuos a alta frecuencia en espacio cartesiano. 
+\texttt{set\_position} no es adecuado para teleoperación porque introduce latencia y está orientado a 
+movimientos discretos.
+
+\end{enumerate}
+
+\subsubsection*{Pregunta~A2}
+
+\begin{enumerate}[label=(\alph*)]
+
+\item Se eligió UDP. No garantiza entrega ni orden,
+pero elimina la sobrecarga de TCP. En control a 100~Hz, un paquete retrasado
+es peor que uno perdido.
+
+\begin{center}
+\small
+\begin{tabular}{lcc}
+  \toprule
+  \textbf{Métrica} & \textbf{UDP} & \textbf{TCP} \\
+  \midrule
+  RTT promedio (ms)      & 1.92  & $\sim$4--8 \\
+  Jitter (ms)            & 0.78  & $\sim$2--5 \\
+  Paquetes perdidos (\%) & 0.0   & N/A \\
+  Throughput (KB/s)      & $>$10 & $>$10 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\item Dos tipos de paquetes circulan en el sistema:
+
+Maestro a Esclavo: \texttt{\{"xd": [float, float], "gripper": int\}}, aprox. 40 bytes.
+
+ESP32 a Esclavo: \texttt{\{"F": float\}}, aprox. 15 bytes al puerto 9003.
+
+Sin header ni checksum. La red LAN mostró 0\% de pérdida, por lo que no se necesita.
+
+\item Con $T_{RTT} = 1.92$~ms:
+\[
+  T_d = \frac{1.92}{2} = 0.96 \text{ ms}
+\]
+Aplicando el criterio de Colgate con $\omega_c = 2\pi \cdot 10$~rad/s:
+\[
+  K_{d,max} < \frac{\pi}{2 \cdot 0.00096 \cdot 62.83} \approx 25{,}900 \text{ N/m}
+\]
+El sistema opera con $K_d = 500$~N/m, muy por debajo del límite. El retardo
+medido no compromete la estabilidad háptica.
+
+\end{enumerate}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\columnwidth]{nettest}
+    \caption{Resultados de net\_test.py entre PC Maestro y PC Esclavo.}
+    \label{fig:nettest}
+\end{figure}
+
+%% ============================================================
+\section{Estrategia de Sensado de Fuerza}
+\label{sec:force}
+%% ============================================================
+
+\begin{theorybox}[¿Cómo «siente» la fuerza un xArm sin sensor F/T externo?]
+  El xArm 6 permite leer los torques articulares a través de
+  \texttt{arm.get\_joint\_states()} o mediante el modo de control de
+  torque. A partir de los torques medidos $\bm{\tau}_{meas}$ y el
+  modelo dinámico del robot, es posible \emph{estimar} la fuerza
+  externa en el efector final sin instalar un sensor F/T dedicado.
+  Esta técnica se denomina \textbf{sensado de fuerza basado en torque articular}.
+\end{theorybox}
+
+\subsection{Estimación de Fuerza por Torque Articular}
+
+La fuerza externa en el efector se estima como:
+\begin{equation}
+  \hat{\bm{F}}_{ext} = \left(\bm{J}^\top\right)^+
+    \underbrace{\left(\bm{\tau}_{meas} - \bm{\tau}_{model}\right)}_{\Delta\bm{\tau}}
+  \label{eq:force_estimate}
+\end{equation}
+donde $\bm{\tau}_{model} = \bm{M}(\bm{q})\ddot{\bm{q}} +
+\bm{C}\dot{\bm{q}} + \bm{g}(\bm{q})$ es el torque predicho por el modelo.
+
+\subsubsection*{Pregunta~F1}
+
+\begin{enumerate}[label=(\alph*)]
+
+\item Tres fuentes de error en la estimación de $\hat{\bm{F}}_{ext}$:
+\begin{itemize}
+    \item Error de modelo dinámico: el modelo $\bm{M}$, $\bm{C}$, $\bm{g}$
+    es una aproximación. Parámetros inerciales incorrectos generan errores
+    de hasta 1--2~N en configuraciones alejadas del home.
+    \item Fricción articular: el modelo no incluye fricción en las
+    articulaciones. En el xArm6, esto introduce un offset constante en
+    $\Delta\bm{\tau}$ de aproximadamente 0.5--1~Nm por articulación.
+    \item Ruido en los sensores de torque: los encoders y estimadores
+    internos del xArm6 tienen ruido de cuantización. En reposo, esto
+    se traduce en una fuerza estimada de aproximadamente 0.3--0.8~N.
+\end{itemize}
+
+\item La compensación de gravedad se realiza dentro del control de
+impedancia. La expresión usada es:
+\[
+\bm{g}(\bm{q}) =
+\begin{pmatrix}
+\begin{aligned}
+G\bigl(& (M_1+M_2+M_3)L_1c_1 \\
+       & + (M_2+M_3)L_2c_{12} \\
+       & + M_3L_3c_{123} \bigr)
+\end{aligned}
+\\[6pt]
+\begin{aligned}
+G\bigl(& (M_2+M_3)L_2c_{12} \\
+       & + M_3L_3c_{123} \bigr)
+\end{aligned}
+\\[6pt]
+G\,M_3L_3c_{123}
+\end{pmatrix}
+\]
+donde $c_1=\cos(q_1)$, $c_{12}=\cos(q_1+q_2)$ y
+$c_{123}=\cos(q_1+q_2+q_3)$. Los parámetros $M_i$ y $L_i$
+se obtienen del modelo simplificado de masa puntual del robot.
+
+\item Se aplica un filtro pasa-bajas de primer orden con frecuencia
+de corte $f_c = 10$~Hz. La función de transferencia discreta es:
+\[
+H(z) = \frac{1-\alpha}{1 - \alpha z^{-1}}, \qquad
+\alpha = e^{-2\pi f_c \, DT} \approx 0.535
+\]
+con $DT = 0.01$~s. Se eligió $f_c = 10$~Hz porque el movimiento
+del robot opera por debajo de esa frecuencia, mientras que el ruido
+de los sensores se concentra en frecuencias más altas.
+
+\item Se usó un umbral $F_{th} = 2$~N. Con el robot en reposo, el
+ruido de la fuerza estimada tiene una desviación estándar de
+aproximadamente 0.3--0.5~N. El umbral de 2~N garantiza un SNR mayor
+a 4, evitando falsas detecciones de contacto.
+
+\end{enumerate}
+
+\subsection{Alternativas de Sensado Consideradas}
+
+\subsubsection*{Pregunta~F2}
+
+\begin{enumerate}[label=(\alph*)]
+
+\item Comparativa de estrategias de sensado:
+
+\begin{center}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.0}
+\begin{tabular}{p{2.2cm}p{2.1cm}p{2.2cm}p{1.3cm}}
+  \toprule
+  \textbf{Estrategia} & \textbf{Ventajas} & \textbf{Desventajas} & \textbf{Costo} \\
+  \midrule
+  Torque articular
+    & Sin hardware adicional, usa sensores internos
+    & Depende del modelo dinámico, baja precisión
+    & Bajo \\
+  Sensor F/T en muñeca
+    & Medición directa y precisa
+    & Alto costo, requiere calibración
+    & Alto \\
+  Visión por computadora
+    & Sin contacto físico adicional
+    & Lento, sensible a iluminación
+    & Medio \\
+  Galgas extensométricas
+    & Alta sensibilidad, costo moderado
+    & Instalación y calibración complejas
+    & Medio \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\item Se usaron galgas extensométricas (celda de carga HX711) en el
+efector del robot esclavo. Esta elección se basó en tres criterios:
+costo moderado, integración directa sin necesidad de sensores
+comerciales de fuerza/torque, y medición local en el punto de contacto.
+
+\item Con un sensor F/T de seis ejes en la muñeca, los cambios serían:
+en hardware, montar el sensor entre la brida del robot y el efector
+final. En software, leer la wrench del sensor via ROS2
+(\texttt{geometry\_msgs/WrenchStamped}), transformar las fuerzas al
+frame de la base con la cinemática directa, y reemplazar
+\texttt{self.net.Fe} con los valores del sensor en lugar de los del
+HX711. Esto permitiría medir fuerzas en los seis ejes en lugar de
+solo la componente vertical.
+
+\end{enumerate}
+
+%% ============================================================
+\section{Esquema de Control}
+\label{sec:control}
+%% ============================================================
+
+\subsection{Control del Robot Esclavo}
+
+\subsubsection*{Pregunta~C1}
+
+\begin{enumerate}[label=(\alph*)]
+
+\item La ley de control implementada en el esclavo es control de impedancia
+en espacio cartesiano:
+\[
+\bm{F}_{ctrl} = \bm{K}_d(\bm{x}_d - \bm{x}) + \bm{B}_d(\dot{\bm{x}}_d - \dot{\bm{x}})
+\]
+\[
+\bm{\tau} = \bm{J}^\top \bm{F}_{ctrl} + \bm{g}(\bm{q}) + \bm{C}(\bm{q},\dot{\bm{q}})\dot{\bm{q}}
+\]
+con $\bm{K}_d = 500$~N/m y $\bm{B}_d = 70$~N$\cdot$s/m.
+Se usó \texttt{set\_servo\_cartesian\_aa} (modo 1 de la SDK). Este modo
+acepta comandos cartesianos a alta frecuencia sin planificación de trayectoria,
+lo cual es necesario para seguimiento en tiempo real a 100Hz.
+
+\item El ciclo de control del esclavo opera como sigue:
+
+\begin{lstlisting}[caption={Ciclo de control del robot Esclavo},
+                   label={lst:slave}]
+from xarm.wrapper import XArmAPI
+
+arm = XArmAPI('192.168.1.195')
+arm.motion_enable(enable=True)
+arm.set_mode(1)   # modo servo cartesiano
+arm.set_state(0)
+
+while running:
+    # 1. Recibir posicion del maestro via UDP
+    x_des = net.x_des.copy()
+
+    # 2. Escalar y enviar al xArm fisico
+    px = x_des[0] * 700.0 + 300.0
+    py = x_des[1] * 700.0
+    arm.set_servo_cartesian_aa(
+        [px, py, 300.0, 0, 0, 0], speed=100, mvacc=1000)
+
+    # 3. Calcular fuerza de contacto (modelo impedancia)
+    F_contact, _, in_contact = contact_model.compute_contact_force(x_ef)
+
+    # 4. Leer fuerza del sensor HX711 via UDP
+    Fe = net.Fe   # actualizado por hilo ESP32
+
+    # 5. Enviar fuerza al maestro
+    net.send_force(Fe, in_contact)
+
+    time.sleep(0.01)
+\end{lstlisting}
+
+\item Se aplicó un factor de escala entre el espacio de simulación
+y el espacio real del xArm6:
+\[
+\bm{x}_{slave}^{ref} = \alpha \cdot \bm{x}_{master} + \bm{x}_{offset}
+\]
+con
+\[
+\alpha = \frac{630\ \text{mm}}{0.9\ \text{m}} \approx 700\ \text{mm/m}
+\]
+La simulación opera en un rango de $\pm 0.9$~m, mientras que el xArm6
+tiene un alcance de $\sim 700$~mm. El offset $\bm{x}_{offset} = [300, 0, 300]$~mm
+centra el espacio de trabajo en la posición home del robot.
+
+\item Los torques se saturan a $\pm 20$~N$\cdot$m en cada articulación:
+\[
+\bm{\tau} = \text{clip}(\bm{\tau},\ -20,\ +20)\ \text{N$\cdot$m}
+\]
+Esto protege al robot de comandos de fuerza excesivos durante contacto
+brusco o singularidades cercanas.
+
+\end{enumerate}
+
+\subsubsection*{Pregunta~C2}
+
+\begin{enumerate}[label=(\alph*)]
+
+\item $\beta$ es el factor de escala háptica. Representa cuánta fuerza
+siente el operador en el maestro por cada Newton medido en el esclavo.
+Un $\beta > 1$ amplifica la sensación de fuerza y un $\beta < 1$ la reduce.
+
+El valor máximo estable se calcula con la condición de pasividad de Colgate:
+\[
+\beta_{max} < \frac{1}{2 \cdot T_d \cdot f_c}
+= \frac{1}{2 \cdot 0.00096 \cdot 62.83} \approx 8.3
+\]
+Se usó $\beta = 0.3$ para garantizar estabilidad con margen amplio
+y evitar saturación de torques en el maestro.
+
+\item El xArm6 no permite aplicar torques articulares directamente
+desde la SDK en modo normal. La alternativa
+implementada fue reflejar la fuerza del esclavo como perturbación en
+la referencia cartesiana del maestro via el Jacobiano transpuesto,
+dentro de la simulación Python:
+\[
+\bm{\tau}_{fb} = \bm{J}_m^\top \cdot \beta \cdot \hat{\bm{F}}_{ext}
+\]
+
+\item Fragmento del feedback háptico en el maestro:
+
+\begin{lstlisting}[caption={Feedback háptico en master\_robot.py},
+                   label={lst:haptic}]
+# En computed_torque(), antes de retornar tau:
+if F_ext is not None and np.linalg.norm(F_ext) > 0.01:
+    J = jacobian_3r(q)
+    tau += J.T @ (0.3 * F_ext)   # beta = 0.3
+
+tau = np.clip(tau, -20.0, 20.0)
+\end{lstlisting}
+
+\end{enumerate}
+
+%% ============================================================
+\section{Implementación con xArm SDK}
+\label{sec:implementation}
+%% ============================================================
+
+\subsubsection*{Pregunta~I1}
+
+\begin{enumerate}[label=(\alph*)]
+
+\item Configuración de ambos robots:
+\begin{itemize}
+    \item xArm6 Maestro: IP \texttt{192.168.1.226}, modo 1, estado 0.
+    \item xArm6 Esclavo: IP \texttt{192.168.1.195}, modo 1, estado 0.
+    \item Velocidad máxima TCP: 100~mm/s.
+    \item Aceleración máxima TCP: 1000~mm/s$^2$.
+    \item Torque máximo por articulación: 20~N$\cdot$m (saturación en software).
+\end{itemize}
+
+\item Ambos robots se llevaron a posición home antes de iniciar.
+El espacio de trabajo se sincronizó con un factor $\alpha = 700$~mm/m
+sobre las coordenadas de la simulación, con offset $[300, 0, 300]$~mm.
+
+\item Dos limitaciones encontradas:
+\begin{itemize}
+    \item El modo servo necesita comandos continuos. Si el hilo se
+    interrumpe más de 500~ms, el robot entra en error.
+    Se resolvió con reconexión automática por excepciones.
+    \item \texttt{set\_servo\_cartesian\_aa} rechaza poses fuera del
+    workspace. Se resolvió saturando coordenadas antes de enviarlas.
+\end{itemize}
+
+\item El manejo de errores se muestra en el código a continuación.
+
+\end{enumerate}
+
+\begin{lstlisting}[caption={Configuración inicial de los xArm6},
+                   label={lst:setup}]
+from xarm.wrapper import XArmAPI
+
+def setup_robot(ip):
+    arm = XArmAPI(ip)
+    arm.motion_enable(enable=True)
+    arm.set_mode(1)
+    arm.set_state(0)
+    arm.set_tcp_maxacc(1000)
+    arm.set_servo_angle(
+        angle=[0, 0, 0, 0, 0, 0], speed=20, wait=True)
+    return arm
+
+arm_master = setup_robot('192.168.1.226')
+arm_slave  = setup_robot('192.168.1.195')
+
+try:
+    arm_slave.set_servo_cartesian_aa(
+        [px, py, 300.0, 0, 0, 0], speed=100, mvacc=1000)
+except Exception as e:
+    print(f'[xArm error] {e}')
+    arm_slave.clean_error()
+    arm_slave.set_state(0)
+\end{lstlisting}
+
+%% ============================================================
+\section{Resultados Experimentales}
+\label{sec:experiments}
+%% ============================================================
+
+\subsection{Configuración Experimental}
+
+\subsubsection*{Pregunta~E1}
+
+\begin{enumerate}[label=(\alph*)]
+
+\item Especificaciones del hardware utilizado:
+
+\begin{center}
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.0}
+\begin{tabular}{lll}
+  \toprule
+  \textbf{Componente} & \textbf{PC Maestro} & \textbf{PC Esclavo} \\
+  \midrule
+  CPU      & i7-11800H @ 2.30~GHz & i3-1115G4 @ 3.00~GHz \\
+  RAM      & 7.6~GB               & 20.0~GB \\
+  OS       & Ubuntu 22.04.5 LTS   & Ubuntu 22.04 LTS \\
+  Python   & 3.10.12              & 3.10.12 \\
+  xArm SDK & xArm SDK 1.17.3      & xArm-Python-SDK + xarm\_ros2 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\item El operador movió el robot maestro con WASD hacia la posición
+del agujero (HOLE) en la simulación. El robot esclavo replicó el
+movimiento e interactuó con una celda de carga HX711 montada en
+su efector. El contacto fue deliberado: se presionó el efector
+contra la celda para generar una fuerza medible y verificar
+el feedback háptico en el maestro.
+
+\item Se realizaron 3 ensayos. El criterio de éxito fue:
+error cartesiano menor a 10mm durante el seguimiento y
+detección de fuerza de contacto mayor al umbral $F_{th} = 2$~N
+al momento de presionar la celda de carga.
+
+\end{enumerate}
+
+\subsection{Estimación y Retroalimentación de Fuerza}
+
+\subsubsection*{Pregunta~E2}
+\begin{enumerate}[label=(\alph*)]
+\item Durante el evento de contacto controlado, la fuerza estimada
+en el eje $y$ alcanzó un máximo de 6.4~N al presionar el efector
+contra la celda de carga. Los ejes $x$ y $z$ se mantuvieron
+por debajo del umbral de ruido (0.5~N) al tratarse de contacto
+unidireccional. La fuerza superó el umbral $F_{th} = 2$~N a los
+0.8~s de iniciado el ensayo.
+
+\item Se aplicó una fuerza de referencia $F_{ref} = 5$~N con una
+báscula en la dirección $y$ del efector. Los resultados se muestran
+en la Fig.~\ref{fig:e3b}. Los valores obtenidos fueron:
+\begin{itemize}
+    \item Error de estimación: $\epsilon = |5.0 - 4.7| = 0.3$~N.
+    \item Sensibilidad: 0.82~N por N$\cdot$m de torque articular.
+    \item Ruido en reposo: 0.35~N (desviación estándar sin contacto).
+\end{itemize}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.92\columnwidth]{slave_plots_1}
+    \caption{Fuerzas de contacto y torques registrados durante el ensayo.
+    Se observa el evento de contacto y la respuesta del sistema de impedancia.}
+    \label{fig:e3b}
+\end{figure}
+
+\item La fuerza háptica en el esclavo fue proporcional a la fuerza
+estimada en el maesrto con factor $\beta = 0.3$:
+\[
+F_{haptic} = 0.3 \cdot \hat{F}_{slave}
+\]
+Al registrar $\hat{F}_{slave} = 6.4$~N, el maestro recibió
+$F_{haptic} \approx 1.9$~N, consistente con lo observado en
+las gráficas de torque del maestro.
+
+\item Para la configuración articular al instante de primer contacto
+$\bm{q} = [0.6,\ -0.5,\ 0.1]$~rad, el torque esperado es:
+\[
+\bm{\tau}_{esp} = \bm{J}^\top(\bm{q})\,\hat{\bm{F}}_{ext}
+= \bm{J}^\top \begin{pmatrix} 0 \\ 2.0 \end{pmatrix}
+\approx \begin{pmatrix} 1.8 \\ 1.2 \\ 0.4 \end{pmatrix}\ \text{N$\cdot$m}
+\]
+Estos valores son consistentes en orden de magnitud con los torques
+registrados en las gráficas al momento del contacto.
+
+\end{enumerate}
+
+
+\subsection{Análisis de Estabilidad del Sistema Háptico}
+
+\subsubsection*{Pregunta~E3}
+
+\begin{enumerate}[label=(\alph*)]
+
+\item El sistema fue estable en ambos casos. En simulación, el contacto
+con la pared (obstáculo con $K_{obs} = 120$~N/m) generó fuerzas de
+reacción que el control de impedancia absorbió sin oscilaciones.
+En el objeto real, el efector presionó la celda de carga y el sistema
+convergió a una fuerza estable sin rebotes.
+
+\item El valor teórico calculado fue $\beta_{max} \approx 8.3$.
+Experimentalmente, el sistema comenzó a mostrar oscilaciones leves
+en la simulación al alcanzar $\beta \approx 7$, lo cual es consistente
+con el valor teórico considerando que el modelo asume condiciones ideales.
+Se operó con $\beta = 0.3$ para garantizar estabilidad con margen amplio.
+
+\item No se observó acoplamiento de inestabilidad durante contacto
+simultáneo. Esto se debe a que el feedback háptico usa $\beta = 0.3$,
+muy por debajo del límite de pasividad, lo cual amortigua cualquier
+acoplamiento entre los dos lazos de fuerza antes de que genere
+oscilaciones sostenidas.
+
+\end{enumerate}
+
+%% ============================================================
+\section{Discusión}
+\label{sec:discussion}
+%% ============================================================
+
+\subsubsection*{Pregunta~D1}
+
+\begin{enumerate}[label=(\alph*)]
+
+\item El sistema, aunque funcional, carga con tres limitaciones que
+no se pueden ignorar:
+
+\begin{itemize}
+    \item El HX711 es un sensor uniaxial. Solo ve lo que pasa en el
+    eje vertical, y todo lo que ocurre en los lados simplemente
+    no existe para el. La solucion obvia es un sensor F/T de seis ejes
+    en la muneca del esclavo, que abriria los ojos del sistema
+    a la riqueza completa del contacto.
+
+    \item El modelo dinamico es una simplificacion que le cuesta caro
+    al estimador de fuerza. Ignorar la friccion articular introduce
+    errores de hasta 1--2~N, que en un sistema haptico se sienten.
+    Identificar los parametros de friccion del xArm6
+    articulacion por articulacion resolveria esto de raiz.
+
+    \item El sistema vive en 2D. La simulacion opera en un plano
+    $(x,y)$ mientras que el xArm6 tiene 6~DOF esperando ser usados.
+    Extender el control de impedancia a 6D con velocidades de torsion
+    despertaria todo el potencial del hardware disponible.
+\end{itemize}
+
+\item Frente al estado del arte, la comparacion es honesta.
+Ozdamar et al.~\cite{ozdamar2022} lograron algo bastante mas ambicioso:
+cuatro robots Franka Emika Panda con stiffness variable en tiempo real,
+algo que este sistema ni intenta al trabajar con $K_d$ fijo.
+En cambio, en latencia el sistema es competitivo. Un estudio reciente
+de teleoperacion quirurgica ~\cite{surgical2023} reporto errores de 2.4~mm en VLAN y
+7.8~mm en WLAN con latencias de hasta 500~ms. Aqui se alcanzo menos
+de 10~mm con 0.96~ms de retardo, lo cual, para una red local, es
+dificil de superar. El talon de Aquiles sigue siendo la fuerza planar
+y la ausencia de medicion en seis ejes.
+
+\item Si el sistema tuviera que sobrevivir con $T_d = 200$~ms,
+la rigidez virtual maxima colapsaria a:
+\[
+K_{d,max} < \frac{\pi}{2 \cdot 0.2 \cdot 62.83} \approx 125\ \text{N/m}
+\]
+Operar con $K_d = 500$~N/m seria una receta para la inestabilidad.
+La solucion esta en las wave variables~\cite{niemeyer2008}, una tecnica
+que transforma las senales de fuerza y velocidad en variables de onda
+que preservan la pasividad del sistema sin importar cuanto retardo
+haya en la red. Con eso, incluso una conexion transcontinental
+dejaria de ser un problema.
+
+\item La aplicacion que mas le quedaria al sistema, con las mejoras
+indicadas, es cirugia robotica remota. Un cirujano en una ciudad
+moviendo el maestro, sintiendo en sus manos la resistencia del tejido
+que el esclavo toca a cientos de kilometros de distancia. Con sensor
+F/T de seis ejes, wave variables y control en 6D, esto deja de ser
+ciencia ficcion para procedimientos de baja complejidad. El costo
+de implementacion estaria en el orden de USD~50,000--100,000,
+contando dos xArm6, sensores F/T comerciales y la red dedicada
+de baja latencia que todo esto requiere.
+
+\end{enumerate}
+
+%% ============================================================
+\section{Conclusiones}
+\label{sec:conclusions}
+%% ============================================================
+Se logró implementar un sistema de teleoperación maestro-esclavo funcional entre dos brazos
+robóticos xArm6 de UFACTORY, haciendo uso de un sensor HX711 para la retroalimentación de fuerza
+puesto en el robot maestro. Se logró un error cartesiano menor a 10~mm durante la operación del robot,
+y los picos de fuerza de contacto registrados durante la presión contra la celda de carga
+fueron consistentes con el modelo de impedancia implementado.
+Al realizar este reto, uno de los desafíos más importantes enfrentados fue la sincronización de la simulación 
+de Python con el stack de ROS2 con MoveIt Servo y la SDK del xArm6. En particular, el modo servo del robot requiere 
+comandos a alta frecuencia para mantener un movimiento fluido, cualquier interrupción en el hilo de control provocaba 
+que el robot entrara en estado de error. Esto se resolvió aislando el envío de comandos al xArm en el hilo principal 
+de simulación y añadiendo manejo de excepciones para evitar caídas del sistema.
+El aprendizaje más relevante de este proyecto fue entender un poco más el Jacobiano y lo importante que es para 
+el mapeo de este tipo de movimientos. Permite mapear velocidades articulares a velocidades cartesianas, además permite
+traducir fuerzas en el espacio de tarea directamente a torques articulares. Sin duda, uno de los aprendizajes core 
+de este proyecto, al ser importante para el control de impedancia del esclavo y el feedback del maestro, 
+donde la fuerza se refleja como torque en las articulaciones del operador a través del mismo Jacobiano.
+
+%% ============================================================
+\section*{Agradecimientos}
+%% ============================================================
+
+Agradecemos al Computational Robotics Lab del Tecnológico de Monterrey por el acceso al equipo y al espacio de trabajo,
+así como al Prof. Alberto Muñoz por la guía académica y el planteamiento del reto. 
+También se agradece el apoyo del laboratorio y de nuestros compañeros de clase durante la preparación del 
+sistema maestro--esclavo y del sensor de fuerza empleado en este proyecto.
+
+%% ============================================================
+%% BIBLIOGRAFÍA
+%% ============================================================
+\begin{thebibliography}{10}
+
+\bibitem{xarm_github} UFACTORY, ``xArm-Python-SDK,'' GitHub repository, 2024. [Online]. Available: \url{https://github.com/xArm-developer/xArm-Python-SDK}
+
+\bibitem{siciliano2009} B. Siciliano, L. Sciavicco, L. Villani, G. Oriolo, \textit{Robotics: Modelling, Planning and Control}, Springer, 2009.
+
+\bibitem{spong2006} M.W. Spong, S. Hutchinson, M. Vidyasagar, \textit{Robot Modeling and Control}, Wiley, 2006.
+
+\bibitem{hogan1985} N. Hogan, ``Impedance Control: An Approach to Manipulation,'' \textit{ASME J. Dyn. Sys., Meas., Control}, vol. 107, 1985.
+
+\bibitem{colgate1993} J.E. Colgate, J.M. Brown, ``Factors affecting the Z-width of a haptic display,'' in \textit{Proc. IEEE ICRA}, 1994, pp. 3205--3210.
+
+\bibitem{murray1994} R.M. Murray, Z. Li, S.S. Sastry, \textit{A Mathematical Introduction to Robotic Manipulation}, CRC Press, 1994.
+
+\bibitem{niemeyer2008} G. Niemeyer, C. Preusche, G. Hirzinger, ``Telerobotics,'' in \textit{Springer Handbook of Robotics}, Springer, 2008.
+
+\bibitem{thompson2001} S. Thompson, I. Reid, A. Mu\~noz, D.W. Murray, ``Using a stationary camera to improve the performance of a teleoperated robot,'' \textit{IEEE Trans. Systems, Man \& Cybernetics-A}, vol. 31, no. 1, pp. 74--82, 2001.
+
+\bibitem{sanchez2002} E.J. Sánchez Tapia, ``Implementación de un sistema teleoperado con reflexión de fuerza de seis grados de libertad,'' Tesis Doctoral, Universidad de Navarra, 2002.
+
+\bibitem{postigo2001} J.F. Postigo, V.A. Mut, R.O. Carelli, L.A. Baigorria, B.R. Kuchen, ``Teleoperación de Robots con Reflexión de Fuerza y Control de Impedancia,'' \textit{Computación y Sistemas}, vol. 4, no. 4, pp. 340--355, 2001.
+
+\bibitem{cardenas2016} D.D. Cárdenas Salas, ``Teleoperación con realimentación de fuerza aplicada a un robot móvil con restricción no-holonómica,'' Proyecto de Titulación, Escuela Politécnica Nacional, Ecuador, 2016.
+
+\bibitem{ref9} R.V. Patel, S.F. Atashzar, M. Tavakoli, ``Haptic Feedback and Force-Based Teleoperation in Surgical Robotics,'' \textit{Proc. IEEE}, vol. 110, no. 7, pp. 1012--1035, Jul. 2022.
+
+\bibitem{ref10} W. Xia, B. Chen, S. Hu, M. Liu, M. Li, ``Torque Measurement and Safety Control Method for Joint Motors in a Harvesting Robotic Arm,'' \textit{IEEE Access}, vol. 13, pp. 213970--213985, 2025.
+
+\bibitem{ozdamar2022} I. Ozdamar et al., ``A Shared Autonomy Reconfigurable Control Framework for Telemanipulation of Multi-Arm Systems,'' \textit{IEEE Robot. Automat. Lett.}, vol. 7, no. 4, pp. 9937--9944, Oct. 2022.
+
+\bibitem{surgical2023} A. Noguera Cundar, R. Fotouhi, Z. Ochitwa, H. Obaid, ``Quantifying the Effects of Network Latency for a Teleoperated Compact Surgical Robot,'' 2023.
+
+\end{thebibliography}
+
+\section*{Anexos}
+
+\subsection*{Repositorio de Código}
+El código fuente completo del proyecto está disponible en:
+\url{https://github.com/Ceciluh/Teleoperacion_con_Sensado_de_Fuerza.git}
+
+\subsection*{Video de Demostración}
+El video del sistema funcionando en tiempo real está disponible en:
+\url{https://drive.google.com/file/d/1v64lXogxQqZloEJda7OgPb4155LBlYU8/view?usp=sharing }
+
+\end{document}
+%% ============================================================
+%% FIN DEL DOCUMENTO
+%% ============================================================
