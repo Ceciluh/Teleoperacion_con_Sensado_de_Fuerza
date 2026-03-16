@@ -314,6 +314,13 @@ class MasterNetClient:
         self._thread  = threading.Thread(target=self._recv_loop, daemon=True)
         self._thread.start()
 
+        self._esp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self._esp_sock.bind(('', 9003))
+        self._esp_sock.settimeout(0.005)
+        self._esp_thread = threading.Thread(
+            target=self._esp_recv_loop, daemon=True)
+        self._esp_thread.start()
+
     def send_command(self, xd, gripper=True):
         """Envía posición deseada al esclavo."""
         msg = json.dumps({"xd": xd.tolist(), "gripper": int(gripper)})
@@ -325,9 +332,18 @@ class MasterNetClient:
             try:
                 data, _ = self.sock_rx.recvfrom(256)
                 parsed  = json.loads(data.decode())
-                self.Fe      = np.array(parsed["Fe"])
+#                 self.Fe      = np.array(parsed["Fe"])
                 self.contact = bool(parsed["contact"])
             except (socket.timeout, json.JSONDecodeError):
+                pass
+
+    def _esp_recv_loop(self):
+        while True:
+            try:
+                data, _ = self._esp_sock.recvfrom(128)
+                p = json.loads(data.decode())
+                self.Fe = np.array([0.0, float(p["F"])])
+            except (socket.timeout, json.JSONDecodeError, KeyError):
                 pass
 
 

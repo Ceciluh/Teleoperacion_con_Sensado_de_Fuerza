@@ -37,7 +37,7 @@ _SCALE        = _REAL_RANGE / _SIM_RANGE
 _HOME_X       = 300.0
 _HOME_Y       = 0.0
 _HOME_Z       = 300.0
-ESP32_PORT = 9003
+#ESP32_PORT = 9003
 
 # ─────────── ganancias de impedancia ─────────────────────────────────────────
 KD_IMP = 500.0   # rigidez virtual [N/m]    — Kd de la impedancia
@@ -270,14 +270,6 @@ class SlaveNetServer:
         self._thread  = threading.Thread(target=self._recv_loop, daemon=True)
         self._thread.start()
 
-        self.Fe       = np.zeros(2)
-        self._esp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self._esp_sock.bind(('', ESP32_PORT))
-        self._esp_sock.settimeout(0.005)
-        self._esp_thread = threading.Thread(
-            target=self._esp_recv_loop, daemon=True)
-        self._esp_thread.start()
-
     def _recv_loop(self):
         """Hilo receptor — actualiza xd continuamente."""
         while True:
@@ -288,15 +280,6 @@ class SlaveNetServer:
                 self.gripper = bool(parsed["gripper"])
                 self.master_addr = addr   # guardar para responder
             except (socket.timeout, json.JSONDecodeError, AttributeError):
-                pass
-
-    def _esp_recv_loop(self):
-        while True:
-            try:
-                data, _ = self._esp_sock.recvfrom(128)
-                p = json.loads(data.decode())
-                self.Fe = np.array([0.0, float(p["F"])])
-            except (socket.timeout, json.JSONDecodeError, KeyError):
                 pass
 
     def send_force(self, Fe, contact, master_port=9002):
@@ -621,14 +604,6 @@ def _main(master_ip):
     ani = animation.FuncAnimation(fig, animate, interval=50,
                                   blit=False, cache_frame_data=False)
     plt.show()
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="TE3001B — Robot Esclavo")
-    parser.add_argument("--master-ip", default="127.0.0.1",
-                        help="IP del PC maestro (default: loopback)")
-    args = parser.parse_args()
-    main(args.master_ip)
 
 
 def main(args=None):
